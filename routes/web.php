@@ -1,7 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DisciplinaController;
+use App\Http\Controllers\AulaController;
+{
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::resource('alunos', AlunoController::class);
+Route::resource('disciplinas', DisciplinaController::class);
+Route::resource('aulas', AulaController::class);
+}
