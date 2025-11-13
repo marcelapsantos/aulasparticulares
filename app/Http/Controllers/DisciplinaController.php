@@ -6,59 +6,75 @@ use Illuminate\Http\Request;
 
 class DisciplinaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index()
     {
-        //
+        $disciplinas = Disciplina::orderBy('nome')->get();
+        return view('disciplina.index', compact('disciplinas'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
-        //
+        return view('disciplina.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+       // 1. Validação dos dados
+       $request->validate([
+        'nome' => 'required|string|max:255|unique:disciplinas,nome', // Nome deve ser único
+        'carga_horaria' => 'required|integer|min:1',
+        'valor_hora' => 'required|numeric|min:0.01',
+    ]);
+
+    // 2. Criação do registro
+    Disciplina::create($request->all());
+
+    // 3. Redireciona com mensagem de sucesso
+    return redirect()->route('disciplinas.index')
+                     ->with('success', 'Disciplina cadastrada com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+        $disciplina = Disciplina::findOrFail($id);
+        return view('disciplina.show', compact('disciplina'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
-        //
+        $disciplina = Disciplina::findOrFail($id);
+        return view('disciplina.edit', compact('disciplina'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
-        //
+        $disciplina = Disciplina::findOrFail($id);
+        
+        // 1. Validação (o nome deve ser único, exceto para o registro atual)
+        $request->validate([
+            'nome' => 'required|string|max:255|unique:disciplinas,nome,'.$disciplina->id,
+            'carga_horaria' => 'required|integer|min:1',
+            'valor_hora' => 'required|numeric|min:0.01',
+        ]);
+        
+        // 2. Atualização dos dados
+        $disciplina->update($request->all());
+
+        // 3. Redireciona com mensagem de sucesso
+        return redirect()->route('disciplinas.index')
+                         ->with('success', 'Disciplina atualizada com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(string $id)
     {
-        //
+        Disciplina::destroy($id);
+        return redirect()->route('disciplinas.index')
+                         ->with('success', 'Disciplina excluída com sucesso.');
     }
 }

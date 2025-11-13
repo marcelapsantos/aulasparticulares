@@ -16,46 +16,78 @@ class AlunoController extends Controller
   
     public function create()
     {
-        //
+        return view('aluno.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+   
     public function store(Request $request)
     {
-        //
+         // 1. Validação dos dados de entrada
+         $request->validate([
+            'nome' => 'required|string|max:255',
+            'telefone' => 'nullable|string|max:20',
+            'email' => 'required|email|unique:alunos,email', // O e-mail deve ser único
+        ]);
+
+        // 2. Criação do registro no banco de dados
+        Aluno::create([
+            'nome' => $request->nome,
+            'telefone' => $request->telefone,
+            'email' => $request->email,
+        ]);
+
+        // 3. Redireciona com mensagem de sucesso
+        return redirect()->route('alunos.index')
+                         ->with('success', 'Aluno cadastrado com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+        $aluno = Aluno::findOrFail($id);
+        return view('aluno.show', compact('aluno'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
-        //
+        $aluno = Aluno::findOrFail($id);
+        return view('aluno.edit', compact('aluno'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
-        //
+        $aluno = Aluno::findOrFail($id);
+
+        // 1. Validação, ignorando o próprio email do aluno
+        $request->validate([
+            'nome' => 'required|string|max:255',
+            'telefone' => 'nullable|string|max:20',
+            'email' => 'required|email|unique:alunos,email,'.$aluno->id, 
+        ]);
+
+        // 2. Atualização dos dados
+        $aluno->update([
+            'nome' => $request->nome,
+            'telefone' => $request->telefone,
+            'email' => $request->email,
+        ]);
+
+        // 3. Redireciona com mensagem de sucesso
+        return redirect()->route('alunos.index')
+                         ->with('success', 'Dados do Aluno atualizados com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+   
     public function destroy(string $id)
     {
-        //
+        $aluno = Aluno::findOrFail($id);
+        
+        // Se a FK estiver configurada corretamente na Migration, isso pode excluir as Aulas relacionadas (cascade)
+        $aluno->delete(); 
+        
+        return redirect()->route('alunos.index')
+                         ->with('success', 'Aluno excluído com sucesso.');
     }
 }

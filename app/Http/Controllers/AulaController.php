@@ -3,63 +3,102 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Aluno;
+use App\Models\Aula;
+use App\Models\Disciplina;
 
 class AulaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+   
     public function index()
     {
-        //
+        $aulas = Aula::with(['aluno', 'disciplina'])->latest()->paginate(10);
+        return view('aulas.index', compact('aulas'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+   
     public function create()
     {
-        //
+        $alunos = Aluno::orderBy('nome')->get();
+        $disciplinas = Disciplina::orderBy('nome')->get();
+
+        return view('aulas.create', compact('alunos', 'disciplinas'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'aluno_id' => 'required|exists:alunos,id',
+            'disciplina_id' => 'required|exists:disciplinas,id',
+            'data' => 'required|date',
+            'duracao_horas' => 'required|numeric|min:0.5',
+        ]);
+        
+        // Busca o valor/hora da disciplina
+        $disciplina = Disciplina::findOrFail($request->disciplina_id);
+        
+        // CALCULA O VALOR TOTAL
+        $valorTotal = $request->duracao_horas * $disciplina->valor_hora;
+        
+        Aula::create([
+            'aluno_id' => $request->aluno_id,
+            'disciplina_id' => $request->disciplina_id,
+            'data' => $request->data,
+            'duracao_horas' => $request->duracao_horas,
+            'valor_total' => $valorTotal,
+        ]);
+        
+        return redirect()->route('aulas.index')->with('success', 'Aula registrada e valor calculado!');  
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+        $aula = Aula::with(['aluno', 'disciplina'])->findOrFail($id);
+        return view('aulas.show', compact('aula'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
-        //
+        $aula = Aula::findOrFail($id);
+        $alunos = Aluno::orderBy('nome')->get();
+        $disciplinas = Disciplina::orderBy('nome')->get();
+        
+        return view('aulas.edit', compact('aula', 'alunos', 'disciplinas'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'aluno_id' => 'required|exists:alunos,id',
+            'disciplina_id' => 'required|exists:disciplinas,id',
+            'data' => 'required|date',
+            'duracao_horas' => 'required|numeric|min:0.5',
+        ]);
+        
+        $aula = Aula::findOrFail($id);
+        
+        // Busca o novo valor/hora da disciplina (caso tenha sido alterada)
+        $disciplina = Disciplina::findOrFail($request->disciplina_id);
+        
+        // RECALCULA O VALOR TOTAL
+        $valorTotal = $request->duracao_horas * $disciplina->valor_hora;
+        
+        $aula->update([
+            'aluno_id' => $request->aluno_id,
+            'disciplina_id' => $request->disciplina_id,
+            'data' => $request->data,
+            'duracao_horas' => $request->duracao_horas,
+            'valor_total' => $valorTotal, // Salva o valor recalculado
+        ]);
+        
+        return redirect()->route('aulas.index')->with('success', 'Aula atualizada e valor recalculado!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(string $id)
     {
-        //
+        Aula::destroy($id);
+        return redirect()->route('aulas.index')->with('success', 'Aula excluída com sucesso.');
     }
 }
