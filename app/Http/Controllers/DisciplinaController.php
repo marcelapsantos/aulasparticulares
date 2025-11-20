@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Disciplina;
 
 class DisciplinaController extends Controller
 {
     
     public function index()
     {
-        $disciplinas = Disciplina::orderBy('nome')->get();
-        return view('disciplina.index', compact('disciplinas'));
+        $disciplinas = Disciplina::all();
+        return view('disciplinas.index', compact('disciplinas'));
     }
 
     
